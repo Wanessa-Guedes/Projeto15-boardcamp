@@ -247,7 +247,7 @@ app.put('/customers/:id', async (req,res) => {
         name: Joi.string().required(),
         phone: Joi.string().pattern(new RegExp('^[0-9]{10,11}$')).required(),
         cpf: Joi.string().pattern(new RegExp('^[0-9]{11}$')).required(),
-        birthday: Joi.date().format('DD-MM-YYYY').required(),
+        birthday: Joi.date().iso().required(),
     })
     const { error, value } = schema.validate(req.body, {abortEarly: false});
         
@@ -256,7 +256,7 @@ app.put('/customers/:id', async (req,res) => {
     }
 
     try {
-        const {id} = parseInt(req.params);
+        const id = parseInt(req.params.id);
         if(isNaN(id)){
             return res.status(400).send(`Dado inválido`);
         }
@@ -267,7 +267,8 @@ app.put('/customers/:id', async (req,res) => {
         }
 
         await connection.query(`UPDATE customers SET name=$1, phone=$2, cpf=$3, birthday=$4 WHERE id=$5`, 
-                                [value.name, value.phone, value.cpf, value.birthday, id]);
+                                [value.name, value.phone, value.cpf, req.body.birthday, id]);
+        res.sendStatus(200);
     } catch (e) {
         console.log(e);
         res.status(500).send("Ocorreu um erro ao obter as categorias");
