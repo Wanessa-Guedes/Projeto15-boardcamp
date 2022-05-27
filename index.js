@@ -42,19 +42,17 @@ app.get("/categories", async (req,res) => {
 // TODO: Inserir categoria
 app.post("/categories", async (req,res) => {
 
-    const {name} = req.body;
-
+    const name = req.body;
+    console.log(name)
     // TODO: Regras de Negócio 1
     // name: não pode estar vazio ⇒ nesse caso, deve retornar status 400
     const schema = Joi.object({
-        name: Joi.string()
-        .required(),
+        name: Joi.string().required()
     })
     const { error, value } = schema.validate(name, {abortEarly: false});
         
     if(error){
-        res.status(422).send(error.details.map(detail => detail.message));
-        return;
+        return res.status(400).send(error.details.map(detail => detail.message));
     }
 
     try {
@@ -62,9 +60,11 @@ app.post("/categories", async (req,res) => {
         // name: não pode ser um nome de categoria já existente ⇒ nesse caso deve retornar status 409
         const  categorias = await connection.query("SELECT * FROM categories");
         let categorieExists = false;
-        categorias.rows.map((categoria, i) => {
-            categorieExists = categoria.name === value.name;
-        })
+        for(let i = 0; i < categorias.rows.length; i++){
+            if(categorias.rows[i].name  === value.name){
+                categorieExists = true;
+            }
+        }
         if(categorieExists){
             return res.status(409).send('Categoria já cadastrada.');
         } 
