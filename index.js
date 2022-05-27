@@ -122,7 +122,7 @@ app.post('/games', async (req,res) => {
     const { error, value } = schema.validate(dataGames, {abortEarly: false});
         
     if(error){
-        return res.status(422).send(error.details.map(detail => detail.message));
+        return res.status(400).send(error.details.map(detail => detail.message));
     }
 
     try {
@@ -212,12 +212,12 @@ app.post('/customers', async (req,res) => {
         name: Joi.string().required(),
         phone: Joi.string().pattern(new RegExp('^[0-9]{10,11}$')).required(),
         cpf: Joi.string().pattern(new RegExp('^[0-9]{11}$')).required(),
-        birthday: Joi.date().format('DD-MM-YYYY').required(),
+        birthday: Joi.date().iso().required()
     })
     const { error, value } = schema.validate(req.body, {abortEarly: false});
         
     if(error){
-        return res.status(422).send(error.details.map(detail => detail.message));
+        return res.status(400).send(error.details.map(detail => detail.message));
     }
 
     try {
@@ -228,7 +228,8 @@ app.post('/customers', async (req,res) => {
         }
 
         await connection.query(`INSERT INTO customers (name, phone, cpf, birthday) 
-                                VALUES ($1, $2, $3, $4)`, [value.name, value.phone, value.cpf, value.birthday]);
+                                VALUES ($1, $2, $3, $4)`, [value.name, value.phone, value.cpf, req.body.birthday]);
+        res.sendStatus(201);
     } catch (e) {
         console.log(e);
         res.status(500).send("Ocorreu um erro ao obter as categorias");
