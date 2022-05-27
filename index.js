@@ -170,7 +170,7 @@ app.get('/customers', async (req,res) => {
         const customers = await connection.query(`SELECT * FROM customers`);
         if(cpf){
             let cpfs = new RegExp(`^${cpf}`);
-            for(let i = 0; i < customers.length; i++){
+            for(let i = 0; i < customers.rows.length; i++){
                 if(cpfs.test(customers.rows[i].cpf)){
                     cpfFilter.push(customers.rows[i]);
                 }
@@ -189,12 +189,12 @@ app.get('/customers/:id', async (req,res) => {
 
     try{
     
-    const {id} = parseInt(req.params);
+    const id = parseInt(req.params.id);
     if(isNaN(id)){
         return res.status(400).send(`Dado inválido`);
     }
     const customerIndividual = await connection.query(`SELECT * FROM customers WHERE id = $1`, [id]);
-    if(!customerIndividual) return res.status(404).send(`Usuário não encontrado.`);
+    if(customerIndividual.rows.length === 0) return res.status(404).send(`Usuário não encontrado.`);
     res.status(200).send(customerIndividual.rows);
     } catch (e) {
         console.log(e);
