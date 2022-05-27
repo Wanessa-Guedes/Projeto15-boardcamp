@@ -43,7 +43,6 @@ app.get("/categories", async (req,res) => {
 app.post("/categories", async (req,res) => {
 
     const name = req.body;
-    console.log(name)
     // TODO: Regras de Negócio 1
     // name: não pode estar vazio ⇒ nesse caso, deve retornar status 400
     const schema = Joi.object({
@@ -85,17 +84,18 @@ app.get("/games", async (req,res) => {
     const name = req.query.name;
     let gameFilter = [];
     try {
-        const games = await connection.query("SELECT * FROM games");
+        const games = await connection.query(`SELECT games.*, categories.name as "categoryName"
+                                                FROM games JOIN categories ON games."categoryId" = categories.id`);
         if(name){
-            let game = new RegExp(`^${name}`);
-            for(let i = 0; i < games.length; i++){
-                if(game.test(games.rows[i].name)){
+            let game = new RegExp(`^${name.toLowerCase()}`);
+            for(let i = 0; i < games.rows.length; i++){
+                if(game.test(games.rows[i].name.toLowerCase())){
                     gameFilter.push(games.rows[i]);
                 }
             }
             res.status(200).send(gameFilter)}
         else {
-            res.sendStatus(200).send(games.rows)
+            res.status(200).send(games.rows)
         }
     } catch (e) {
         console.log(e);
@@ -109,11 +109,13 @@ app.post('/games', async (req,res) => {
     //`stockTotal` e `pricePerDay` devem ser maiores que 0; 
     const dataGames = {
         name: req.body.name,
+        image: req.body.image,
         stockTotal: req.body.stockTotal,
         pricePerDay: req.body.pricePerDay
     }
     const schema = Joi.object({
         name: Joi.string().required(),
+        image: Joi.string().required(),
         stockTotal: Joi.number().integer().min(1).required(),
         pricePerDay: Joi.number().integer().min(1).required()
     })
