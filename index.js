@@ -10,6 +10,19 @@ const app = express();
 app.use(json());
 app.use(cors());
 
+// Colocando as datas
+function twoDigits(num) {
+    return num.toString().padStart(2, '0');
+}
+
+function formatedDate(date) {
+    return [
+        twoDigits(date.getDate()),
+        twoDigits(date.getMonth() + 1),
+    date.getFullYear(),
+    ].join('-');
+}
+
 //TODO: CRUD de Categorias [Create|Read]
 //TODO: Rota get de categorias
 
@@ -255,6 +268,139 @@ app.put('/customers/:id', async (req,res) => {
     } catch (e) {
         console.log(e);
         res.status(500).send("Ocorreu um erro ao obter as categorias");
+    }
+})
+
+// TODO: CRUD de aluguéis
+
+app.get("/rentals", async (req,res) => {
+    // Regras de negócio
+    //Para a rota /rentals?customerId=1, deve ser retornado uma array somente com os aluguéis do cliente com id 1
+    //Para a rota /rentals?gameId=1, deve ser retornado uma array somente com os aluguéis do jogo com id 1
+    const queryCustomerId = req.query.customerId;
+    const queryGameId = req.query.gameId;
+    try {
+        const rentalsInfo = await connection.query(`SELECT rentals.*, customer.id, customer.name,
+                                                        game.id, game.name, game."categoryId", game.name as "categoryName" FROM 
+                                                        rentals JOIN customer ON rentals.id = customer.id
+                                                        JOIN games ON rentals.id = games.id`)
+        if(queryCustomerId || queryGameId){
+            for(let i = 0; i < rentalsInfo.rows.length; i++){
+                let rentalsFilter = [];
+                if(rentalsInfo.rows[i].customer.id == queryCustomerId || rentalsInfo.rows[i].games.id == queryGameId){
+                    rentalsFilter.push(rentalsInfo.rows[i]);
+                }
+            }
+            res.status(200).send(rentalsFilter)
+        } else {
+            res.status(200).send(rentalsInfo.rows)
+        }
+    } catch (e) {
+        console.log(e);
+        res.status(500).send("Ocorreu um erro ao obter as categorias");
+    }
+})
+
+app.post("/rentals", async (req,res) => {
+
+    const rentalInfo = req.body;
+    let date = formatedDate(new Date());
+    // daysRented deve ser um número maior que 0. Se não, deve responder com status 400
+    const schema = Joi.object({
+        daysRented: Joi.number().integer().min(1).required()
+    })
+    const { error, value } = schema.validate(rentalInfo.daysRented, {abortEarly: false});
+        
+    if(error){
+        return res.status(400).send(error.details.map(detail => detail.message));
+    }
+
+    try{
+        //Ao inserir um aluguel, deve verificar se gameId se refere a um jogo existente. Se não, deve responder com status 400
+        const game = await connection.query(`SELECT * FROM games WHERE id=$1`, [rentalInfo.gameId]);
+        if(!game){
+            return res.sendStatus(400);
+        }
+        //Ao inserir um aluguel, deve verificar se customerId se refere a um cliente existente. Se não, deve responder com status 400
+        const customer = await connection.query(`SELECT * FROM customers WHERE id=$1`, [rentalInfo.customerId]);
+        if(!customer){
+            return res.sendStatus(400);
+        }
+        //Ao inserir um aluguel, deve-se validar que existem jogos disponíveis, ou seja, que não tem alugueis em aberto acima da quantidade de jogos em estoque. Caso contrário, deve retornar status 400
+        // stockTotal
+        const rentalGame = await connection.query(`SELECT * FROM rentals WHERE "gameId"=$1`, [rentalInfo.gameId]);
+        if(game.rows[0].stockTotal < rentalGame.rows[0].length){
+            return res.sendStatus(400);
+        }
+        // Ao inserir um aluguel, os campos returnDate e delayFee devem sempre começar como null
+        // originalPrice: daysRented multiplicado pelo preço por dia do jogo no momento da inserção
+        // rentDate: data atual no momento da inserção
+        let price = rentalInfo.daysRented*game.rows[0].pricePerDay;
+        await connection.query(`INSERT INTO rentals ("customerId", "gameId", "rentDate", "daysRented", "returnDate", "originalPrice", "delayFee")
+                                VALUES ($1, $2, $3, $4, $5, $6, $7)`, 
+                                [rentalInfo.customerId, rentalInfo.gameId, date, rentalInfo.daysRented, null, price, null]);
+        res.sendStatus(201);
+
+    } catch (e) {
+        console.log(e);
+        res.status(500).send("Ocorreu um erro ao obter as categorias");
+    }
+})
+
+app.post("/rentals/:id/return", async (req,res) => {
+
+    const rentalId = req.params.id;
+    let date = formatedDate(new Date());
+
+    try{
+        //Ao retornar um aluguel, deve verificar se o id do aluguel fornecido existe. Se não, deve responder com status 404
+        const isRental = await connection.query(`SELECT * FROM rentals WHERE id=$1`, [rentalId]);
+        if(!isRental){
+            return res.sendStatus(404);
+        }
+        // Ao retornar um aluguel, deve verificar se o aluguel já não está finalizado. Se estiver, deve responder com status 400
+        if(isRental.rows[0].returnDate !== null){
+            return res.sendStatus(400);
+        }
+        //Ao retornar um aluguel, o campo returnDate deve ser populado com a data atual do momento do retorno
+        //Ao retornar um aluguel, o campo delayFee deve ser automaticamente populado com um valor equivalente ao número de dias de atraso vezes o preço por dia do jogo no momento do retorno.
+        let timeDiff = Math.abs(isRental.rows[0].rentDate.getTime() - date.getTime());
+        let daysDiff = timeDiff/(1000*60*60*24);
+        let fee = 0;
+        const games = await connection.query(`SELECT * FROM games WHERE id=$1`, [isRental.rows[0].gameId]);
+        if(daysDiff > isRental.rows[0].daysRented){
+            fee = (daysDiff - isRental.rows[0].daysRented)*(games.rows[0].pricePerDay)
+        }
+        await connection.query(`UPDATE rentals SET "returnDate"=$1, "delayFee"=$2`, [date, fee]);
+        res.sendStatus(200);
+        
+    } catch (e) {
+        console.log(e);
+        res.status(500).send("Ocorreu um erro ao obter as categorias");
+    }
+})
+
+app.delete("/rentals/:id", async (req,res) => {
+    
+    const rentalId = req.query.id;
+
+    try{
+        // Ao excluir um aluguel, deve verificar se o id fornecido existe. Se não, deve responder com status 404
+        const rentalData = await connection.query(`SELECT * FROM rentals WHERE id=$1`, [rentalId]);
+        if(!rentalData){
+            res.sendStatus(404);
+        }
+        // Ao excluir um aluguel, deve verificar se o aluguel já não está finalizado (ou seja, returnDate já está preenchido). Se estiver, deve responder com status 400
+        if(rentalData.rows[0].returnDate !== null){
+            res.sendStatus(400);
+        }
+
+        await connection.query(`DELETE FROM rentals WHERE id=$1`, [rentalId]);
+        res.sendStatus(200);
+
+    } catch (e) {
+    console.log(e);
+    res.status(500).send("Ocorreu um erro ao obter as categorias");
     }
 })
 
