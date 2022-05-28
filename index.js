@@ -365,7 +365,6 @@ app.post("/rentals", async (req,res) => {
 app.post("/rentals/:id/return", async (req,res) => {
 
     const rentalId = req.params.id;
-    console.log(rentalId)
     let date = formatedDate(new Date());
     let dateTime = new Date();
 
@@ -400,17 +399,16 @@ app.post("/rentals/:id/return", async (req,res) => {
 
 app.delete("/rentals/:id", async (req,res) => {
     
-    const rentalId = req.query.id;
-
+    const rentalId = req.params.id;
     try{
         // Ao excluir um aluguel, deve verificar se o id fornecido existe. Se não, deve responder com status 404
         const rentalData = await connection.query(`SELECT * FROM rentals WHERE id=$1`, [rentalId]);
-        if(!rentalData){
-            res.sendStatus(404);
+        if(rentalData.rows.length === 0){
+            return res.sendStatus(404);
         }
         // Ao excluir um aluguel, deve verificar se o aluguel já não está finalizado (ou seja, returnDate já está preenchido). Se estiver, deve responder com status 400
         if(rentalData.rows[0].returnDate !== null){
-            res.sendStatus(400);
+            return res.sendStatus(400);
         }
 
         await connection.query(`DELETE FROM rentals WHERE id=$1`, [rentalId]);
