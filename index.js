@@ -10,6 +10,10 @@ const app = express();
 app.use(json());
 app.use(cors());
 
+//TODO: Separar em controllers, middlewares e routers
+// TODO: Testar com o front
+// TODO: Ver se dá para aplicar o JOIN em algumas rotas
+// TODO: VER OS BONUS
 // Colocando as datas
 function twoDigits(num) {
     return num.toString().padStart(2, '0');
@@ -23,8 +27,7 @@ function formatedDate(date) {
     ].join('-');
 }
 
-//TODO: CRUD de Categorias [Create|Read]
-//TODO: Rota get de categorias
+// CRUD de Categorias [Create|Read]
 
 app.get("/categories", async (req,res) => {
 
@@ -39,7 +42,6 @@ app.get("/categories", async (req,res) => {
 
 });
 
-// TODO: Inserir categoria
 app.post("/categories", async (req,res) => {
 
     const name = req.body;
@@ -76,7 +78,7 @@ app.post("/categories", async (req,res) => {
     }
 })
 
-//TODO: CRUD de Jogos [Create|Read]
+//CRUD de Jogos [Create|Read]
 
 app.get("/games", async (req,res) => {
     //TODO: Regras de Negócio
@@ -158,7 +160,7 @@ app.post('/games', async (req,res) => {
     }
 })
 
-//TODO: CRUD de Cliente
+// CRUD de Cliente
 
 app.get('/customers', async (req,res) => {
     //TODO: Regra de negócios
@@ -275,7 +277,7 @@ app.put('/customers/:id', async (req,res) => {
     }
 })
 
-// TODO: CRUD de aluguéis
+// CRUD de aluguéis
 
 app.get("/rentals", async (req,res) => {
     // Regras de negócio
@@ -284,20 +286,57 @@ app.get("/rentals", async (req,res) => {
     const queryCustomerId = req.query.customerId;
     const queryGameId = req.query.gameId;
     try {
-        const rentalsInfo = await connection.query(`SELECT rentals.*, customers.id, customers.name,
-                                                    games.id, games.name, games."categoryId", games.name as "categoryName" FROM 
+        const rentalsInfo = await connection.query(`SELECT rentals.*, customers.id as "idFromCustomer", customers.name as "customerName",
+                                                    games.id as "idFromGames", games.name as "gamesNames", games."categoryId", categories.name as "categoryName" FROM 
                                                     rentals JOIN customers ON rentals."customerId" = customers.id
-                                                    JOIN games ON rentals."gameId" = games.id`)
-        if(queryCustomerId || queryGameId){
-            for(let i = 0; i < rentalsInfo.rows.length; i++){
+                                                    JOIN games ON rentals."gameId" = games.id 
+                                                    JOIN categories ON rentals."gameId" = categories.id`)
+            if(queryCustomerId || queryGameId){
                 let rentalsFilter = [];
-                if(rentalsInfo.rows[i].customer.id == queryCustomerId || rentalsInfo.rows[i].games.id == queryGameId){
-                    rentalsFilter.push(rentalsInfo.rows[i]);
+            for(let i = 0; i < rentalsInfo.rows.length; i++){
+                if(rentalsInfo.rows[i].idFromCustomer == queryCustomerId || rentalsInfo.rows[i].idFromGames == queryGameId){
+                    rentalsFilter.push({id: rentalsInfo.rows[i].id,
+                        customerId: rentalsInfo.rows[i].customerId,
+                        gameId: rentalsInfo.rows[i].gameId,
+                        rentDate: rentalsInfo.rows[i].rentDate,
+                        daysRented: rentalsInfo.rows[i].daysRented,
+                        returnDate: rentalsInfo.rows[i].returnDate, // troca pra uma data quando já devolvido
+                        originalPrice: rentalsInfo.rows[i].originalPrice,
+                        delayFee: rentalsInfo.rows[i].delayFee,
+                        customer: {id: rentalsInfo.rows[i].idFromCustomer,
+                            name: rentalsInfo.rows[i].customerName
+                        },
+                    game:{
+                        id: rentalsInfo.rows[i].idFromGames,
+                        name: rentalsInfo.rows[i].gamesNames,
+                        categoryId: rentalsInfo.rows[i].categoryId,
+                        categoryName: rentalsInfo.rows[i].categoryName,
+                    } });
                 }
             }
             res.status(200).send(rentalsFilter)
         } else {
-            res.status(200).send(rentalsInfo.rows)
+            let rentalsFinal = [];
+            for(let i = 0; i < rentalsInfo.rows.length; i++){
+                rentalsFinal.push({id: rentalsInfo.rows[i].id,
+                    customerId: rentalsInfo.rows[i].customerId,
+                    gameId: rentalsInfo.rows[i].gameId,
+                    rentDate: rentalsInfo.rows[i].rentDate,
+                    daysRented: rentalsInfo.rows[i].daysRented,
+                    returnDate: rentalsInfo.rows[i].returnDate, // troca pra uma data quando já devolvido
+                    originalPrice: rentalsInfo.rows[i].originalPrice,
+                    delayFee: rentalsInfo.rows[i].delayFee,
+                    customer: {id: rentalsInfo.rows[i].idFromCustomer,
+                        name: rentalsInfo.rows[i].customerName
+                    },
+                game:{
+                    id: rentalsInfo.rows[i].idFromGames,
+                    name: rentalsInfo.rows[i].gamesNames,
+                    categoryId: rentalsInfo.rows[i].categoryId,
+                    categoryName: rentalsInfo.rows[i].categoryName,
+                } });
+            }
+            res.status(200).send(rentalsFinal)
         }
     } catch (e) {
         console.log(e);
