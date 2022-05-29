@@ -7,6 +7,7 @@ import Joi from "joi";
 
 import categoriesRouter from "./Routers/categoriesRouter.js";
 import gamesRouter from "./Routers/gamesRouter.js";
+import customerRouter from "./Routers/customersRouter.js";
 
 dotenv.config();
 
@@ -166,8 +167,8 @@ app.use(gamesRouter);
 }) */
 
 // CRUD de Cliente
-
-app.get('/customers', async (req,res) => {
+app.use(customerRouter);
+/* app.get('/customers', async (req,res) => {
     //TODO: Regra de negócios
     //- Caso seja passado um parâmetro `cpf` na **query string** da requisição, os clientes devem ser filtrados para retornar somente os com CPF que comecem com a string passada. Exemplo:
     //- Para a rota `/customers?cpf=012`, deve ser retornado uma array somente com os clientes que o CPF comece com "012", como "01234567890", "01221001200", etc
@@ -190,9 +191,9 @@ app.get('/customers', async (req,res) => {
         console.log(e);
         res.status(500).send("Ocorreu um erro ao obter as categorias");
     }
-})
+}) */
 
-app.get('/customers/:id', async (req,res) => {
+/* app.get('/customers/:id', async (req,res) => {
 
     try{
     
@@ -207,9 +208,9 @@ app.get('/customers/:id', async (req,res) => {
         console.log(e);
         res.status(500).send("Ocorreu um erro ao obter as categorias");
     }
-})
+}) */
 
-app.post('/customers', async (req,res) => {
+/* app.post('/customers', async (req,res) => {
     //TODO: - `cpf` deve ser uma string com 11 caracteres numéricos; 
     //`phone` deve ser uma string com 10 ou 11 caracteres numéricos; 
     //`name` não pode ser uma string vazia; 
@@ -241,9 +242,9 @@ app.post('/customers', async (req,res) => {
         console.log(e);
         res.status(500).send("Ocorreu um erro ao obter as categorias");
     }
-})
+}) */
 
-app.put('/customers/:id', async (req,res) => {
+/* app.put('/customers/:id', async (req,res) => {
     //TODO: Regras de negócio:
     //- `cpf` deve ser uma string com 11 caracteres numéricos; 
     //`phone` deve ser uma string com 10 ou 11 caracteres numéricos; 
@@ -280,7 +281,7 @@ app.put('/customers/:id', async (req,res) => {
         console.log(e);
         res.status(500).send("Ocorreu um erro ao obter as categorias");
     }
-})
+}) */
 
 // CRUD de aluguéis
 
