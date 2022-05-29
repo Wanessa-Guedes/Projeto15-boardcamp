@@ -4,6 +4,9 @@ import connection from "./database.js";
 import dotenv from "dotenv";
 import Joi from "joi";
 
+
+import categoriesRouter from "./Routers/categoriesRouter.js";
+
 dotenv.config();
 
 const app = express();
@@ -29,7 +32,7 @@ function formatedDate(date) {
 
 // CRUD de Categorias [Create|Read]
 
-app.get("/categories", async (req,res) => {
+/* app.get("/categories", async (req,res) => {
 
     try{
         const  categorias = await connection.query("SELECT * FROM categories");
@@ -40,9 +43,10 @@ app.get("/categories", async (req,res) => {
         res.status(500).send("Ocorreu um erro ao obter as categorias");
     }
 
-});
+}); */
+app.use(categoriesRouter);
 
-app.post("/categories", async (req,res) => {
+/* app.post("/categories", async (req,res) => {
 
     const name = req.body;
     // TODO: Regras de Negócio 1
@@ -76,7 +80,7 @@ app.post("/categories", async (req,res) => {
         console.log(e);
         res.status(500).send("Ocorreu um erro ao inserir a categoria");
     }
-})
+}) */
 
 //CRUD de Jogos [Create|Read]
 
@@ -263,7 +267,7 @@ app.put('/customers/:id', async (req,res) => {
             return res.status(400).send(`Dado inválido`);
         }
     //- `cpf` não pode ser de um cliente já existente; ⇒ nesse caso deve retornar **status 409**
-        const cpfExist = await connection.query(`SELECT * FROM customers WHERE cpf=$1`, [value.cpf]);
+        const cpfExist = await connection.query(`SELECT * FROM customers WHERE cpf=$1 AND id!=$2`, [value.cpf, id]);
         if(cpfExist.rows.length !== 0){
             return res.status(409).send('CPF já cadastrado.');
         }
