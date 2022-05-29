@@ -8,6 +8,7 @@ import Joi from "joi";
 import categoriesRouter from "./Routers/categoriesRouter.js";
 import gamesRouter from "./Routers/gamesRouter.js";
 import customerRouter from "./Routers/customersRouter.js";
+import rentalsRouter from "./Routers/rentalsRouter.js"
 
 dotenv.config();
 
@@ -20,7 +21,7 @@ app.use(cors());
 // TODO: Ver se dá para aplicar o JOIN em algumas rotas
 // TODO: VER OS BONUS
 // Colocando as datas
-function twoDigits(num) {
+/* function twoDigits(num) {
     return num.toString().padStart(2, '0');
 }
 
@@ -31,7 +32,7 @@ function formatedDate(date) {
         twoDigits(date.getDate())
     ].join('-');
 }
-
+ */
 // CRUD de Categorias [Create|Read]
 
 /* app.get("/categories", async (req,res) => {
@@ -284,8 +285,8 @@ app.use(customerRouter);
 }) */
 
 // CRUD de aluguéis
-
-app.get("/rentals", async (req,res) => {
+app.use(rentalsRouter);
+/* app.get("/rentals", async (req,res) => {
     // Regras de negócio
     //Para a rota /rentals?customerId=1, deve ser retornado uma array somente com os aluguéis do cliente com id 1
     //Para a rota /rentals?gameId=1, deve ser retornado uma array somente com os aluguéis do jogo com id 1
@@ -348,9 +349,9 @@ app.get("/rentals", async (req,res) => {
         console.log(e);
         res.status(500).send("Ocorreu um erro ao obter as categorias");
     }
-})
+}) */
 
-app.post("/rentals", async (req,res) => {
+/* app.post("/rentals", async (req,res) => {
 
     const rentalInfo = req.body;
     let rentalDays = {
@@ -405,9 +406,9 @@ app.post("/rentals", async (req,res) => {
         console.log(e);
         res.status(500).send("Ocorreu um erro ao obter as categorias");
     }
-})
+}) */
 
-app.post("/rentals/:id/return", async (req,res) => {
+/* app.post("/rentals/:id/return", async (req,res) => {
 
     const rentalId = req.params.id;
     let date = formatedDate(new Date());
@@ -440,9 +441,9 @@ app.post("/rentals/:id/return", async (req,res) => {
         console.log(e);
         res.status(500).send("Ocorreu um erro ao obter as categorias");
     }
-})
+}) */
 
-app.delete("/rentals/:id", async (req,res) => {
+/* app.delete("/rentals/:id", async (req,res) => {
     
     const rentalId = req.params.id;
     try{
@@ -463,7 +464,7 @@ app.delete("/rentals/:id", async (req,res) => {
     console.log(e);
     res.status(500).send("Ocorreu um erro ao obter as categorias");
     }
-})
+}) */
 
 // subindo back-end
 const PORTA = process.env.PORTA || 4000;
