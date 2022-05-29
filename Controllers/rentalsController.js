@@ -14,7 +14,7 @@ export async function getRentals(req,res){
                                                     games.id as "idFromGames", games.name as "gamesNames", games."categoryId", categories.name as "categoryName" FROM 
                                                     rentals JOIN customers ON rentals."customerId" = customers.id
                                                     JOIN games ON rentals."gameId" = games.id 
-                                                    JOIN categories ON rentals."gameId" = categories.id`)
+                                                    JOIN categories ON games."categoryId" = categories.id`)
             if(queryCustomerId || queryGameId){
                 let rentalsFilter = [];
             for(let i = 0; i < rentalsInfo.rows.length; i++){
@@ -71,20 +71,20 @@ export async function getRentals(req,res){
 export async function postRentals(req,res){
     
     const rentalInfo = req.body;
-    let rentalDays = {
+/*     let rentalDays = {
         daysRented: rentalInfo.daysRented
-    }
+    } */
     let date = formatedDate(new Date());
     let wasReturned = 0;
     // daysRented deve ser um número maior que 0. Se não, deve responder com status 400
-    const schema = Joi.object({
+/*     const schema = Joi.object({
         daysRented: Joi.number().integer().min(1).required()
-    })
-    const { error, value } = schema.validate(rentalDays, {abortEarly: false});
+    }) */
+/*     const { error, value } = schema.validate(rentalDays, {abortEarly: false});
         
     if(error){
         return res.status(400).send(error.details.map(detail => detail.message));
-    }
+    } */
 
     try{
         //Ao inserir um aluguel, deve verificar se gameId se refere a um jogo existente. Se não, deve responder com status 400

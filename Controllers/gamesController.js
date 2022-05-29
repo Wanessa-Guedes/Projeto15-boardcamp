@@ -1,5 +1,4 @@
 import connection from ".././database.js";
-import Joi from "joi";
 
 
 export async function getGames(req,res){
@@ -26,26 +25,6 @@ export async function getGames(req,res){
 }
 
 export async function postGames(req,res){
-    //TODO: REGRAS DE NEGÓCIO
-    //`name` não pode estar vazio;
-    //`stockTotal` e `pricePerDay` devem ser maiores que 0; 
-    const dataGames = {
-        name: req.body.name,
-        image: req.body.image,
-        stockTotal: req.body.stockTotal,
-        pricePerDay: req.body.pricePerDay
-    }
-    const schema = Joi.object({
-        name: Joi.string().required(),
-        image: Joi.string().required(),
-        stockTotal: Joi.number().integer().min(1).required(),
-        pricePerDay: Joi.number().integer().min(1).required()
-    })
-    const { error, value } = schema.validate(dataGames, {abortEarly: false});
-        
-    if(error){
-        return res.status(400).send(error.details.map(detail => detail.message));
-    }
 
     try {
     //`categoryId` deve ser um id de categoria existente; ⇒ nesses casos, deve retornar **status 400**
@@ -72,7 +51,7 @@ export async function postGames(req,res){
         }
 
         await connection.query(`INSERT INTO games (name, image, "stockTotal", "categoryId", "pricePerDay")
-                                VALUES ($1, $2, $3, $4, $5)`, [value.name, req.body.image, value.stockTotal, req.body.categoryId, value.pricePerDay]);
+                                VALUES ($1, $2, $3, $4, $5)`, [req.body.name, req.body.image, req.body.stockTotal, req.body.categoryId, req.body.pricePerDay]);
         res.sendStatus(201);
     } catch (e) {
         console.log(e);
