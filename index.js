@@ -6,6 +6,7 @@ import Joi from "joi";
 
 
 import categoriesRouter from "./Routers/categoriesRouter.js";
+import gamesRouter from "./Routers/gamesRouter.js";
 
 dotenv.config();
 
@@ -84,7 +85,7 @@ app.use(categoriesRouter);
 
 //CRUD de Jogos [Create|Read]
 
-app.get("/games", async (req,res) => {
+/* app.get("/games", async (req,res) => {
     //TODO: Regras de Negócio
     // Para a rota /games?name=ba, deve ser retornado uma array somente com os jogos que comecem com "ba", como "Banco Imobiliário", "Batalha Naval", etc
     const name = req.query.name;
@@ -107,9 +108,9 @@ app.get("/games", async (req,res) => {
         console.log(e);
         res.status(500).send("Ocorreu um erro ao obter os jogos");
     }
-})
-
-app.post('/games', async (req,res) => {
+}) */
+app.use(gamesRouter);
+/* app.post('/games', async (req,res) => {
     //TODO: REGRAS DE NEGÓCIO
     //`name` não pode estar vazio;
     //`stockTotal` e `pricePerDay` devem ser maiores que 0; 
@@ -162,7 +163,7 @@ app.post('/games', async (req,res) => {
         console.log(e);
         res.status(500).send("Ocorreu um erro ao obter as categorias");
     }
-})
+}) */
 
 // CRUD de Cliente
 
