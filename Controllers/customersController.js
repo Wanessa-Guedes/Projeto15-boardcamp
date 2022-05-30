@@ -34,7 +34,7 @@ export async function getCustomersById(req,res){
         }
         const customerIndividual = await connection.query(`SELECT * FROM customers WHERE id = $1`, [id]);
         if(customerIndividual.rows.length === 0) return res.status(404).send(`Usuário não encontrado.`);
-        res.status(200).send(customerIndividual.rows);
+        res.status(200).send(customerIndividual.rows[0]);
         } catch (e) {
             console.log(e);
             res.status(500).send("Ocorreu um erro ao obter as categorias");
